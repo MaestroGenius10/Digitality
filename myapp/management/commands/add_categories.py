@@ -17,4 +17,4 @@ class Command(BaseCommand):
         ]
         for category_name in categories:
             Category.objects.get_or_create(name=category_name)
-        self.stdout.write(self.style.SUCCESS('Successfully added categories'))
+        self.stdout.write(self.style.SUCCESS('Все категории успешно добавлены'))
