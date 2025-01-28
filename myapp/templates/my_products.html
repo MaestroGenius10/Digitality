@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои товары</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .top-section {
+            background-color: #999999;
+            height: 20vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: bold;
+            color: #343a40;
+        }
+        .navbar {
+            background-color: #808080;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+        .navbar a {
+            color: #343a40;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+        .product-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
+        }
+        .product-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .product-image {
+            width: 15%;
+            padding: 10px;
+        }
+        .product-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .product-info {
+            width: 40%;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .product-info h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .product-info p {
+            margin: 5px 0;
+        }
+        .product-buttons {
+            width: 25%;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .product-buttons button {
+            padding: 8px 12px;
+            font-size: 14px;
+            text-align: center;
+            background-color: #808080;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .product-buttons button:hover {
+            background-color: #696969;
+        }
+        .product-price {
+            width: 15%;
+            padding: 10px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        /* Add Product Button */
+        .add-product-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #808080;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .add-product-button:hover {
+            background-color: #696969;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-section">
+        DIGITALITY
+    </div>
+    <div class="navbar">
+        <a href="{% url 'catalog' %}">Каталог</a>
+        <a href="{% url 'view_cart' %}">Корзина</a>
+        <a href="{% url 'my_goods' %}">Мои товары</a>
+        <a href="{% url 'view_personal_data' %}">Профиль</a>
+    </div>
+    <div class="container">
+        <div class="product-container">
+            {% if goods %}
+                {% for product in goods %}
+                    <div class="product-row">
+                        <!-- Image Section -->
+                        <div class="product-image">
+                            <img src="{{ product.product_picture.url }}" alt="Product Image">
+                        </div>
+
+                        <!-- Product Name Section -->
+                        <div class="product-info">
+                            <h3>{{ product.name }}</h3>
+                            <p>{{ product.description }}</p>
+                        </div>
+
+                        <!-- Product Buttons Section (Left side) -->
+                        <div class="product-buttons">
+                            <form method="POST" action="{% url 'delete_good' goods_id=product.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn">Удалить</button>
+                            </form>
+                            <form action="{% url 'update_good' goods_id=product.id %}">
+                                <button type="submit" class="btn">Изменить</button>
+                            </form>
+                            <form method="POST" action="{% url 'hide_good' goods_id=product.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn">Скрыть</button>
+                            </form>
+                            <form method="POST" action="{% url 'unhide_good' goods_id=product.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn">Показать</button>
+                            </form>
+                        </div>
+
+                        <!-- Product Price Section (Right side) -->
+                        <div class="product-price">
+                            <p>{{ product.price }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Похоже, вы ещё не добавили ни одного товара.</p>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Add Product Button -->
+    <button class="add-product-button" onclick="window.location.href='{% url 'add_good' %}'">Добавить товар</button>
+</body>
+</html>
