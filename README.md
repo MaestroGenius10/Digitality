@@ -8,9 +8,22 @@
 
 Чтобы начать работу с проектом, сначала клонируйте репозиторий на ваш компьютер:
 
-git clone https://github.com/ваш_пользователь/название_репозитория.git
+git clone https://github.com/MaestroGenius10/Digitality
 
-теперь выполним следующую команду
-docker-compose up --build
+далее переходим в нужную папку
+cd Digitality
+
+после вводим следующие команды:
+python -m venv venv
+.\venv\Scripts\activate (если работаем в git bash, то команда source venv/Scripts/activate)
+устанавливаем зависимости
+pip install -r requirements.txt
+
+после открываем проект в PyCharm
+python manage.py clear_database (для очистки базы данных)
+python manage.py add_categories (для добавления предопределённых категорий товаров)
+python manage.py runserver (для запуска сервера)
+
+
 
 
