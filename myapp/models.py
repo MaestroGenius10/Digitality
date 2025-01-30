@@ -36,6 +36,7 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 

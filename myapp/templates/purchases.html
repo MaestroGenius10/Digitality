@@ -27,7 +27,7 @@
         .navbar a {
             color: #343a40;
             text-decoration: none;
-            margin: 0 5px;
+            margin: 0 45px;
         }
         .navbar a:hover {
             text-decoration: underline;
@@ -62,6 +62,8 @@
         .profile-sidebar a {
             text-decoration: none;
             color: #343a40;
+            font-size: 20px;
+            margin-bottom: 15px;
         }
         .profile-sidebar a:hover {
             text-decoration: underline;
@@ -136,6 +138,24 @@
             display: flex;
             justify-content: flex-end;
         }
+        /* Empty Purchases Section */
+        .empty-purchases {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
+        }
+        .empty-purchases img {
+            max-width: 500px; /* Увеличен размер картинки */
+            height: auto;
+        }
+        .empty-purchases h2 {
+            margin-top: 20px;
+            font-size: 28px; /* Увеличен размер текста */
+            color: #343a40;
+        }
     </style>
 </head>
 <body>
@@ -151,10 +171,10 @@
     <div class="container">
         <div class="profile-container">
             <div class="profile-sidebar">
-                 {% if user.profile_picture %}
+                {% if user.profile_picture %}
                     <img src="{{ user.profile_picture.url }}" alt="Profile Picture">
                 {% else %}
-                     <img src="/media/profile_pictures/default.png" alt="Profile Picture">
+                    <img src="/media/profile_pictures/default.png" alt="Profile Picture">
                 {% endif %}
                 <h2>{{ user.name }}</h2>
                 <div class="links-container">
@@ -163,7 +183,7 @@
                     <a href="{% url 'change_password' %}">Безопасность</a>
                     <a href="{% url 'view_user_cards' %}">Оплата</a>
                 </div>
-                <button class="logout-button" onclick="window.location.href={% url 'logout_view' %}">Выйти</button>
+                <button class="logout-button" onclick="window.location.href='{% url 'logout_view' %}'">Выйти</button>
             </div>
             <div class="product-container">
                 {% if purchases %}
@@ -186,7 +206,10 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    <p>Похоже, вы ещё ничего не приобрели.</p>
+                    <div class="empty-purchases">
+                        <img src="/media/static/empty_purchases.jpg" alt="Empty Purchases">
+                        <h2>Упс, вы ещё ничего не приобрели</h2>
+                    </div>
                 {% endif %}
             </div>
         </div>

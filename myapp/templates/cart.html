@@ -27,7 +27,7 @@
         .navbar a {
             color: #343a40;
             text-decoration: none;
-            margin: 0 10px;
+            margin: 0 45px;
         }
         .navbar a:hover {
             text-decoration: underline;
@@ -118,14 +118,23 @@
         .total-price:hover {
             background-color: #696969;
         }
-        /* Debug Section */
-        .debug-info {
-            margin: 20px 0;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-            font-family: monospace;
+        /* Empty Cart Section */
+        .empty-cart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
+        }
+        .empty-cart img {
+            max-width: 500px; /* Увеличен размер картинки */
+            height: auto;
+        }
+        .empty-cart h2 {
+            margin-top: 20px;
+            font-size: 28px; /* Увеличен размер текста */
+            color: #343a40;
         }
     </style>
 </head>
@@ -140,56 +149,65 @@
         <a href="{% url 'view_personal_data' %}">Профиль</a>
     </div>
     <div class="container">
-        <div class="product-container">
-            {% for item in items %}
-                <div class="product-row">
-                    <!-- Image Section -->
-                    <div class="product-image">
-                        {% if item.product.product_picture %}
-                        <img src="{{ item.product.product_picture.url }}" alt="Product Image">
-                        {% else %}
-                        <img src="/media/product_pictures/default.png" alt="Product Picture">
-                        {% endif %}
-                    </div>
+        {% if items %}
+            <div class="product-container">
+                {% for item in items %}
+                    <div class="product-row">
+                        <!-- Image Section -->
+                        <div class="product-image">
+                            {% if item.product.product_picture %}
+                            <img src="{{ item.product.product_picture.url }}" alt="Product Image">
+                            {% else %}
+                            <img src="/media/product_pictures/default.png" alt="Product Picture">
+                            {% endif %}
+                        </div>
 
-                    <!-- Good Name Section -->
-                    <div class="product-info">
-                        <h3>{{ item.product.name }}</h3>
-                        <p>{{ item.product.description }}</p>
-                    </div>
+                        <!-- Good Name Section -->
+                        <div class="product-info">
+                            <h3>{{ item.product.name }}</h3>
+                            <p>{{ item.product.description }}</p>
+                        </div>
 
-                    <!-- Good Price Section -->
-                    <div class="product-price">
-                        <p>{{ item.product.price }}</p>
-                    </div>
+                        <!-- Good Price Section -->
+                        <div class="product-price">
+                            <p>{{ item.product.price }}</p>
+                        </div>
 
-                    <!-- Good Buttons Section -->
-                    <div class="product-buttons">
-                        <form method="POST" action="{% url 'decrease_quantity' item_id=item.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn">-</button>
-                        </form>
-                        <span>{{ item.quantity }}</span>
-                        <form method="POST" action="{% url 'increase_quantity' item_id=item.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn">+</button>
-                        </form>
-                        <form method="POST" action="{% url 'remove_from_cart' item_id=item.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn">Удалить</button>
-                        </form>
+                        <!-- Good Buttons Section -->
+                        <div class="product-buttons">
+                            <form method="POST" action="{% url 'decrease_quantity' item_id=item.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn">-</button>
+                            </form>
+                            <span>{{ item.quantity }}</span>
+                            <form method="POST" action="{% url 'increase_quantity' item_id=item.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn">+</button>
+                            </form>
+                            <form method="POST" action="{% url 'remove_from_cart' item_id=item.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn">Удалить</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
-        </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-cart">
+                <img src="/media/static/empty_cart.jpg" alt="Empty Cart">
+                <h2>Похоже, Ваша корзина пуста. Добавьте какой-нибудь товар</h2>
+            </div>
+        {% endif %}
     </div>
     <!-- Total Price Section -->
-    <div class="total-price">
-        <p>Итого: {{ total_price }}</p>
-        <form method="POST" action="{% url 'checkout' %}">
-            {% csrf_token %}
-            <button type="submit" class="btn">Оплатить заказ</button>
-        </form>
-    </div>
+    {% if items %}
+        <div class="total-price">
+            <p>Итого: {{ total_price }}</p>
+            <form method="POST" action="{% url 'checkout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn">Оплатить заказ</button>
+            </form>
+        </div>
+    {% endif %}
 </body>
 </html>

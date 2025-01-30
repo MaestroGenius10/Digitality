@@ -28,36 +28,56 @@
         .navbar a {
             color: #343a40;
             text-decoration: none;
-            margin: 0 5px;
+            margin: 0 45px;
         }
         .navbar a:hover {
             text-decoration: underline;
         }
         .product-container {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            align-items: center;
             margin: 20px 0;
             padding: 20px;
+            max-width: 1200px; /* Ограничение максимальной ширины контейнера */
         }
-        .product-image, .product-info, .product-price {
-            width: 30%;
-            padding: 20px;
-            text-align: center;
+        .product-image {
+            width: 50%;
+            max-width: 400px;
+            margin-bottom: 20px;
         }
         .product-image img {
             max-width: 100%;
             height: auto;
         }
-        .product-info h1, .product-info p {
+        .product-info {
+            width: 100%;
+            text-align: center;
             margin-bottom: 20px;
+            font-size: 1.2em; /* Увеличен размер текста */
+            word-wrap: break-word; /* Перенос длинных слов */
+        }
+        .product-info h1 {
+            font-size: 1.5em; /* Увеличен размер заголовка */
+            margin-bottom: 10px;
+        }
+        .product-info p {
+            margin-bottom: 10px;
+        }
+        .product-price {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            margin-top: 20px;
         }
         .product-price .price {
             font-size: 24px;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-right: 20px;
         }
         .product-price form {
-            margin-top: 20px;
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
