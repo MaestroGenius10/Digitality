@@ -101,8 +101,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
-            margin-bottom: 20px;
+            width: 90%;
+            margin: 10px auto 20px 50px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -124,6 +124,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: flex-start;
+
         }
         .product-info h3 {
             margin: 0;
@@ -148,12 +149,12 @@
             padding: 20px;
         }
         .empty-purchases img {
-            max-width: 500px; /* Увеличен размер картинки */
+            max-width: 500px;
             height: auto;
         }
         .empty-purchases h2 {
             margin-top: 20px;
-            font-size: 28px; /* Увеличен размер текста */
+            font-size: 28px;
             color: #343a40;
         }
     </style>
@@ -190,11 +191,7 @@
                     {% for purchase in purchases %}
                         <div class="product-row">
                             <div class="product-image">
-                                {% if purchase.product_picture %}
-                                    <img src="{{ purchase.product_picture }}" alt="Product Image">
-                                {% else %}
-                                    <img src="/media/product_pictures/default.png" alt="Product Picture">
-                                {% endif %}
+                                <img src="{{ purchase.product_picture }}" alt="Product Avatar">
                             </div>
                             <div class="product-info">
                                 <h3>{{ purchase.name }}</h3>

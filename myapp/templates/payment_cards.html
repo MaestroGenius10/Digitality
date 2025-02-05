@@ -143,7 +143,16 @@
         <a href="{% url 'my_goods' %}">Мои товары</a>
         <a href="{% url 'view_personal_data' %}">Профиль</a>
     </div>
+
     <div class="container">
+         {% if messages %}
+                {% for message in messages %}
+                        {% if 'order' in message.tags %}
+                            <div class="alert alert-info">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                    {% get_messages request as message_list %}
+                {% endif %}
         <div class="profile-container">
             <div class="profile-sidebar">
                 {% if user.profile_picture %}

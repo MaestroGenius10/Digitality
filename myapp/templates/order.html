@@ -81,12 +81,13 @@
     <div class="container">
         <div class="order-container">
             <div class="order-details">
-                {% if messages %}
+               {% if messages %}
                     {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }}">
-                            {{ message }}
-                        </div>
+                        {% if 'order' in message.tags %}
+                            <div class="alert alert-info">{{ message }}</div>
+                        {% endif %}
                     {% endfor %}
+                    {% get_messages request as message_list %}
                 {% endif %}
                 <h2>Детали заказа</h2>
                 <p><strong>ID заказа:</strong> {{ order.id }}</p>

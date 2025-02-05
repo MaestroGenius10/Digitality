@@ -97,10 +97,10 @@
         <div class="product-grid">
             {% for good in goods %}
                 <a href="{% url 'product_detail' product_id=good.id %}" class="product-card">
-                    {% if good.product_picture %}
-                        <img src="{{ good.product_picture.url }}" alt="Product Image">
+                    {% if good.avatar.image %}
+                        <img src="{{ good.avatar.image.url }}" alt="Product Image">
                     {% else %}
-                        <img src="/media/product_pictures/default.png" alt="Profile Picture">
+                        <img src="/media/static/default.png" alt="Profile Picture">
                     {% endif %}
                     <h3>{{ good.name }}</h3>
                     <p>{{ good.price }}</p>

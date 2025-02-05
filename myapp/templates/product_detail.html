@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ good.name }}</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
     <style>
         .top-section {
             background-color: #999999;
@@ -41,14 +42,22 @@
             padding: 20px;
             max-width: 1200px; /* Ограничение максимальной ширины контейнера */
         }
-        .product-image {
+        .swiper-container {
             width: 50%;
             max-width: 400px;
             margin-bottom: 20px;
+            position: relative; /* Добавлено для позиционирования точек навигации */
         }
-        .product-image img {
+        .swiper-slide img {
             max-width: 100%;
             height: auto;
+        }
+        .swiper-pagination {
+            margin-top: 10px;
+            position: absolute; /* Добавлено для позиционирования точек навигации */
+            bottom: -20px; /* Смещение точек навигации вниз */
+            left: 50%;
+            transform: translateX(-50%); /* Центрирование точек навигации */
         }
         .product-info {
             width: 100%;
@@ -93,13 +102,28 @@
     </div>
     <div class="container">
         <div class="product-container">
-            <div class="product-image">
-                {% if good.product_picture %}
-                    <img src="{{ good.product_picture.url }}" alt="Product Image">
-                {% else %}
-                    <img src="/media/product_pictures/default.png" alt="Product Picture">
-                {% endif %}
+            <!-- Слайдер изображений -->
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    <!-- Аватарка товара -->
+                    {% if good.avatar.image %}
+                        <div class="swiper-slide">
+                            <img src="{{ good.avatar.image.url }}" alt="Product Avatar">
+                        </div>
+                    {% endif %}
+                    <!-- Остальные изображения товара -->
+                    {% for image in good.images.all %}
+                        <div class="swiper-slide">
+                            <img src="{{ image.image.url }}" alt="Product Image">
+                        </div>
+                    {% endfor %}
+                </div>
+                <!-- Точки навигации -->
+                <div class="swiper-pagination"></div>
             </div>
+            <!-- Кнопки навигации -->
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
             <div class="product-info">
                 <h1>{{ good.name }}</h1>
                 <p>{{ good.description }}</p>
@@ -115,5 +139,24 @@
             </div>
         </div>
     </div>
+    <!-- Подключение Swiper.js -->
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script>
+        var swiper = new Swiper('.swiper-container', {
+            loop: true,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            effect: 'fade',
+            fadeEffect: {
+                crossFade: true
+            },
+        });
+    </script>
 </body>
 </html>

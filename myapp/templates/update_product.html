@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Обновить товар</title>
+    <title>Редактировать товар</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <style>
         .top-section {
             background-color: #999999;
@@ -49,82 +51,106 @@
             background-color: #f9f9f9;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .form-container input,
-        .form-container select,
-        .form-container textarea {
-            width: 100%;
-            margin-bottom: 15px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        .form-container input:focus,
-        .form-container select:focus,
-        .form-container textarea:focus {
-            border-color: #808080;
-            outline: none;
-        }
-        .form-container button {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            color: white;
-            background-color: #808080;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .form-container button:hover {
-            background-color: #696969;
-        }
         .product-image-container {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 15px;
         }
         .product-image-container img {
             max-width: 100px;
             max-height: 100px;
             border-radius: 5px;
-            margin-top: 10px;
+        }
+        .btn-danger {
+            padding: 5px 10px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="top-section">
-        DIGITALITY
-    </div>
+
+    <div class="top-section">DIGITALITY</div>
+
     <div class="navbar">
         <a href="{% url 'catalog' %}">Каталог</a>
-        <a href="#">Корзина</a>
+        <a href="{% url 'view_cart' %}">Корзина</a>
         <a href="{% url 'my_goods' %}">Мои товары</a>
         <a href="{% url 'view_personal_data' %}">Профиль</a>
     </div>
+
     <div class="container">
         <div class="product-container">
             <div class="form-container">
-                <form method="POST" action="{% url 'update_good' goods_id=good.id %}" enctype="multipart/form-data">
+                <h2>Редактировать товар</h2>
+
+                <!-- Ошибки формы -->
+                {% if product_form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Ошибка в форме товара:</strong>
+                        {% for field in product_form %}
+                            {% for error in field.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if avatar_form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Ошибка в форме аватарки:</strong>
+                        {% for field in avatar_form %}
+                            {% for error in field.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if image_formset.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Ошибка в форме изображений:</strong>
+                        {% for form in image_formset %}
+                            {% for error in form.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Форма обновления товара -->
+                <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
-                    {% for field in form %}
-                        {% if field.name == 'product_picture' %}
-                             <div class="form-group">
-                                {{ field.label_tag }}
-                                {{ field }}
-                             </div>
-                        {% else %}
-                     <div class="form-group">
-                        {{ field.label_tag }}
-                        {{ field }}
-                     </div>
-                    {% endif %}
+                    {{ product_form.as_p }}
+
+                    <h3>Аватарка товара</h3>
+                    {{ avatar_form.as_p }}
+
+                    <h3>Изображения товара</h3>
+
+                    <!-- Отображение загруженных изображений -->
+                    {% for image in product.images.all %}
+                        <div class="product-image-container">
+                            <img src="{{ image.image.url }}" alt="Изображение товара">
+                            <label>
+                                <input type="checkbox" name="delete_images" value="{{ image.id }}" class="delete-image"> Удалить
+                            </label>
+                        </div>
                     {% endfor %}
-                    <button type="submit" class="btn">Обновить</button>
+
+                    <!-- Форма загрузки новых изображений -->
+                    {{ image_formset.management_form }}
+                    {% for form in image_formset %}
+                        <div class="product-image-container">
+                             {{ form.as_p }} <!-- Поле изображения -->
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-success">Обновить</button>
                 </form>
             </div>
         </div>
     </div>
+
 </body>
 </html>

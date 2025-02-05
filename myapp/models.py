@@ -2,6 +2,24 @@ from django.db import models
 import bcrypt
 from django.dispatch import receiver
 from django.db.models.signals import post_save
+from .utils import resize_image
+from django.utils.deconstruct import deconstructible
+import os, uuid
+
+
+@deconstructible
+class UniqueImagePath:
+    def __init__(self, subdir):
+        self.subdir = subdir
+
+    def __call__(self, instance, filename):
+        # Генерация уникального имени файла, чтобы избежать дублирования
+        ext = filename.split('.')[-1]
+        unique_filename = f"{uuid.uuid4().hex}.{ext}"
+        # Путь будет уникальным для каждого товара
+        return os.path.join(self.subdir, unique_filename)
+
+
 class User(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
@@ -24,6 +42,7 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
 class Product(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=150)
@@ -31,7 +50,6 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, blank=True, null=True)
     status = models.CharField(max_length=50, default='active')
-    product_picture = models.ImageField(upload_to='product_pictures/',default='product_pictures/default.png', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -43,6 +61,7 @@ class Cart(models.Model):
     def __str__(self):
         return f"Cart of {self.user.name}"
 
+
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -50,6 +69,7 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in {self.cart.user.name}'s cart"
+
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -78,6 +98,45 @@ class PaymentCard(models.Model):
 
     def __str__(self):
         return f"Card of {self.card_holder_name}"
+
+
+class ProductAvatar(models.Model):
+    product = models.OneToOneField('Product', on_delete=models.CASCADE, related_name='avatar')
+    image = models.ImageField(upload_to=UniqueImagePath('product_avatars/'))
+
+    def __str__(self):
+        return f"Avatar for {self.product.name}"
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=UniqueImagePath('product_pictures/'), default='static/default.png')
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            # Получаем существующее изображение (если есть)
+            existing_image = ProductImage.objects.get(pk=self.pk)
+
+            # Если изображение изменилось, применяем resize
+            if existing_image.image != self.image:
+                if self.image:  # Если новое изображение задано
+                    self.image = resize_image(self.image)
+                else:
+                    # Если изображение не задано, устанавливаем дефолтное изображение
+                    self.image = 'static/default.png'
+        else:
+            # Если изображение новое (при создании записи), проверяем его
+            if self.image:
+                self.image = resize_image(self.image)
+            else:
+                # Если изображение не задано, устанавливаем дефолтное
+                self.image = 'static/default.png'
+
+        # Сохраняем модель
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Image for {self.product.name}"
+
 
 @receiver(post_save, sender=User)
 def create_user_cart(sender, instance, created, **kwargs):

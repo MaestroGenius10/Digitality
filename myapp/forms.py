@@ -1,7 +1,11 @@
 from django import forms
+from django.forms import inlineformset_factory, modelformset_factory
 from django.core.exceptions import ValidationError
-from .models import User, PaymentCard, Product
-from .widgets import CustomClearableFileInput
+from .models import User, PaymentCard, Product, ProductImage, ProductAvatar
+from django.forms.widgets import ClearableFileInput
+class CustomClearableFileInput(ClearableFileInput):
+    template_name = "widgets/custom_clearable_file_input.html"
+
 class RegistrationForm(forms.Form):
     email = forms.EmailField(required=True)
     password = forms.CharField(widget=forms.PasswordInput, required=True)
@@ -23,9 +27,11 @@ class RegistrationForm(forms.Form):
             raise ValidationError("Пользователь с такой почтой уже существует.")
         return email
 
+
 class LoginForm(forms.Form):
     email = forms.EmailField(required=True)
     password = forms.CharField(widget=forms.PasswordInput, required=True)
+
 
 class UserUpdateForm(forms.ModelForm):
     class Meta:
@@ -47,11 +53,13 @@ class UserUpdateForm(forms.ModelForm):
             user.save()
         return user
 
+
 class AddPaymentCardForm(forms.Form):
     card_number = forms.CharField(max_length=19, required=True, widget=forms.TextInput(attrs={'placeholder': '1234 5678 1234 5678', 'maxlength': '19'}))
     card_holder_name = forms.CharField(max_length=100, required=True, widget=forms.TextInput(attrs={'placeholder': 'Имя держателя карты'}))
     expiration_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     cvv = forms.CharField(max_length=3, required=True, widget=forms.TextInput(attrs={'placeholder': 'CVV', 'maxlength': '3'}))
+
 
 class DeletePaymentCardForm(forms.Form):
     card = forms.ModelChoiceField(queryset=PaymentCard.objects.none(), empty_label=None, label='Номер карты')
@@ -63,20 +71,42 @@ class DeletePaymentCardForm(forms.Form):
             self.fields['card'].queryset = PaymentCard.objects.filter(user_id=user)
             self.fields['card'].label_from_instance = lambda obj: obj.card_number
 
+
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'description', 'price', 'category', 'product_picture']
+        fields = ['name', 'description', 'price', 'category']
         labels = {
             'name': 'Название товара',
             'description': 'Описание',
             'price': 'Стоимость',
             'category': 'Категория',
-            'product_picture': 'Изображение товара',
         }
-        widgets = {
-            'product_picture': CustomClearableFileInput(attrs={'class': 'form-control'}),
-        }
+
+
+class ProductImageForm(forms.ModelForm):
+    class Meta:
+        model = ProductImage
+        fields = ['image']
+        labels = {'image': 'Изображение товара',}
+        widgets = {'image': CustomClearableFileInput(), }
+
+
+ProductImageFormSet = modelformset_factory(
+    ProductImage,
+    form=ProductImageForm,
+    extra=1,
+
+)
+
+
+class ProductAvatarForm(forms.ModelForm):
+    class Meta:
+        model = ProductAvatar
+        fields = ['image']
+        labels = {'image': 'Аватарка товара',}
+        widgets = {'image': CustomClearableFileInput(),}
+
 
 class ChangePasswordForm(forms.Form):
     old_password = forms.CharField(widget=forms.PasswordInput, label='Старый пароль')
@@ -100,3 +130,4 @@ class ChangePasswordForm(forms.Form):
             raise forms.ValidationError("Новый пароль и его подтверждение не совпадают")
 
         return cleaned_data
+

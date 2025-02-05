@@ -118,6 +118,24 @@
         .add-product-button:hover {
             background-color: #696969;
         }
+        /* Empty Products Section */
+        .empty-products {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
+        }
+        .empty-products img {
+            max-width: 500px; /* Увеличен размер картинки */
+            height: auto;
+        }
+        .empty-products h2 {
+            margin-top: 20px;
+            font-size: 28px; /* Увеличен размер текста */
+            color: #343a40;
+        }
     </style>
 </head>
 <body>
@@ -137,7 +155,11 @@
                     <div class="product-row">
                         <!-- Image Section -->
                         <div class="product-image">
-                            <img src="{{ product.product_picture.url }}" alt="Product Image">
+                            {% if product.avatar.image %}
+                                <img src="{{ product.avatar.image.url }}" alt="Product Avatar">
+                            {% else %}
+                                <img src="/media/static/default.png" alt="Default Product Image">
+                            {% endif %}
                         </div>
 
                         <!-- Product Name Section -->
@@ -152,7 +174,7 @@
                                 {% csrf_token %}
                                 <button type="submit" class="btn">Удалить</button>
                             </form>
-                            <form action="{% url 'update_good' goods_id=product.id %}">
+                            <form action="{% url 'update_good' good_id=product.id %}">
                                 <button type="submit" class="btn">Изменить</button>
                             </form>
                             <form method="POST" action="{% url 'hide_good' goods_id=product.id %}">
@@ -172,11 +194,13 @@
                     </div>
                 {% endfor %}
             {% else %}
-                <p>Похоже, вы ещё не добавили ни одного товара.</p>
+                <div class="empty-products">
+                    <img src="/media/static/empty_your_goods.jpg" alt="Empty Products">
+                    <h2>Похоже, вы ещё не добавили ни одного товара.</h2>
+                </div>
             {% endif %}
         </div>
     </div>
-    <!-- Add Product Button -->
     <button class="add-product-button" onclick="window.location.href='{% url 'add_good' %}'">Добавить товар</button>
 </body>
 </html>

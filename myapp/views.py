@@ -1,12 +1,17 @@
+from .utils import resize_image
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .forms import RegistrationForm, LoginForm, UserUpdateForm, AddPaymentCardForm, DeletePaymentCardForm, ProductForm, ChangePasswordForm
-from .models import User, Product, PaymentCard, Category, CartItem, Cart, Order, OrderItem
+from .forms import (RegistrationForm, LoginForm, UserUpdateForm, AddPaymentCardForm, DeletePaymentCardForm, ProductForm,
+                    ChangePasswordForm, ProductImageFormSet, ProductAvatarForm)
+from .models import User, Product, PaymentCard, Category, CartItem, Cart, Order, OrderItem, ProductImage, ProductAvatar
 from django.db.models import Q
 from datetime import date
 from django.contrib.auth import logout
+
+
 def index(request):
     return render(request, 'index.html')
+
 
 def register(request):
     if request.method == 'POST':
@@ -26,6 +31,7 @@ def register(request):
     else:
         form = RegistrationForm()
     return render(request, 'register.html', {'form': form})
+
 
 def login(request):
     if request.method == 'POST':
@@ -87,6 +93,7 @@ def catalog(request):
     categories = Category.objects.all()
     return render(request, 'catalog.html', {'goods': goods, 'categories': categories})
 
+
 def update_personal_data(request):
     user_id = request.session.get('user_id')
 
@@ -105,9 +112,9 @@ def update_personal_data(request):
         form = UserUpdateForm(instance=user)
     return render(request, 'personal_data.html', {'form': form, 'user': user})
 
+
 def add_payment_card(request):
     user_id = request.session.get('user_id')
-
     if request.method == 'POST':
         form = AddPaymentCardForm(request.POST)
         if form.is_valid():
@@ -127,9 +134,9 @@ def add_payment_card(request):
         form = AddPaymentCardForm()
     return render(request, 'payment_cards.html', {'form': form})
 
+
 def delete_payment_card(request):
     user_id = request.session.get('user_id')
-
     if request.method == 'POST':
         form = DeletePaymentCardForm(request.POST, user=user_id)
         if form.is_valid():
@@ -144,45 +151,109 @@ def delete_payment_card(request):
         form = DeletePaymentCardForm(user=user_id)
     return render(request, 'payment_cards.html', {'form': form})
 
+
 def view_user_cards(request):
     user_id = request.session.get('user_id')
-
     user = get_object_or_404(User, id=user_id)
     cards = PaymentCard.objects.filter(user_id=user_id).values_list('card_number', flat=True)
     add_form = AddPaymentCardForm()
     delete_form = DeletePaymentCardForm(user=user_id)
-    return render(request, 'payment_cards.html', {'cards': cards, 'form': add_form, 'delete_form': delete_form, 'user': user})
+    return render(request, 'payment_cards.html',
+                  {'cards': cards, 'form': add_form, 'delete_form': delete_form, 'user': user})
+
 
 def my_goods(request):
     user_id = request.session.get('user_id')
     goods = Product.objects.filter(user_id=user_id)
     return render(request, 'my_products.html', {'goods': goods})
 
-def add_good(request):
-    if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            product = form.save(commit=False)
-            product.user_id = request.session.get('user_id')
-            product.save()
-            return redirect('my_goods')
-    else:
-        form = ProductForm()
-    categories = Category.objects.all()
-    return render(request, 'add_product.html', {'form': form, 'categories': categories})
 
-def update_good(request, goods_id):
+def add_good(request):
     user_id = request.session.get('user_id')
-    product = get_object_or_404(Product, id=goods_id, user_id=user_id)
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES, instance=product)
-        if form.is_valid():
-            form.save()
+        product_form = ProductForm(request.POST, request.FILES)
+        avatar_form = ProductAvatarForm(request.POST, request.FILES)
+        image_formset = ProductImageFormSet(request.POST, request.FILES)
+
+        if product_form.is_valid() and avatar_form.is_valid() and image_formset.is_valid():
+            product = product_form.save(commit=False)
+            product.user_id = user_id
+            product.save()
+
+            avatar = avatar_form.save(commit=False)
+            avatar.product = product
+            avatar.image = resize_image(avatar.image)
+            avatar.save()
+
+            for form in image_formset:
+                if form.cleaned_data.get('image'):  # Сохраняем только если изображение не пустое
+                    image = form.save(commit=False)
+                    image.product = product
+                    image.image = resize_image(image.image)
+                    image.save()
+
             return redirect('my_goods')
     else:
-        form = ProductForm(instance=product)
-    categories = Category.objects.all()
-    return render(request, 'update_product.html', {'form': form, 'categories': categories, 'good': product})
+        product_form = ProductForm()
+        avatar_form = ProductAvatarForm()
+        image_formset = ProductImageFormSet(queryset=ProductImage.objects.none(), initial=[{}])  # Добавляем пустую форму
+
+    return render(request, 'add_product.html', {
+        'product_form': product_form,
+        'avatar_form': avatar_form,
+        'image_formset': image_formset,
+    })
+
+
+def update_good(request, good_id):
+    product = get_object_or_404(Product, id=good_id)
+    avatar, created = ProductAvatar.objects.get_or_create(product=product)
+
+    if request.method == 'POST':
+        product_form = ProductForm(request.POST, request.FILES, instance=product)
+        avatar_form = ProductAvatarForm(request.POST, request.FILES, instance=avatar)
+        image_formset = ProductImageFormSet(request.POST, request.FILES, queryset=ProductImage.objects.filter(product=product))
+
+        if product_form.is_valid() and avatar_form.is_valid() and image_formset.is_valid():
+            # Сохраняем товар и аватар
+            product_form.save()
+            avatar = avatar_form.save(commit=False)
+            avatar.product = product
+            avatar.save()
+
+            # Удаляем изображения, выбранные для удаления
+            delete_image_ids = request.POST.getlist('delete_images')
+            for image_id in delete_image_ids:
+                try:
+                    image = ProductImage.objects.get(id=image_id, product=product)
+                    image.delete()  # Удаляем изображение
+                except ProductImage.DoesNotExist:
+                    pass
+
+            # Сохраняем новые изображения
+            for form in image_formset:
+                if form.is_valid() and form.cleaned_data.get('image'):
+                    image = form.save(commit=False)
+                    image.product = product
+                    image.save()
+
+            # Если изображений нет, присваиваем дефолтное изображение
+            if not product.images.exists():
+                default_image = ProductImage(product=product, image='product_pictures/default.png')
+                default_image.save()
+
+            return redirect('my_goods')
+    else:
+        product_form = ProductForm(instance=product)
+        avatar_form = ProductAvatarForm(instance=avatar)
+        image_formset = ProductImageFormSet(queryset=ProductImage.objects.filter(product=product))
+
+    return render(request, 'update_product.html', {
+        'product_form': product_form,
+        'avatar_form': avatar_form,
+        'image_formset': image_formset,
+    })
+
 
 def delete_good(request, goods_id):
     if request.method == 'POST':
@@ -190,6 +261,7 @@ def delete_good(request, goods_id):
         product = get_object_or_404(Product, id=goods_id, user_id=user_id)
         product.delete()
         return redirect('my_goods')
+
 
 def hide_good(request, goods_id):
     if request.method == 'POST':
@@ -199,6 +271,7 @@ def hide_good(request, goods_id):
         product.save()
         return redirect('my_goods')
 
+
 def unhide_good(request, goods_id):
     if request.method == 'POST':
         user_id = request.session.get('user_id')
@@ -207,9 +280,11 @@ def unhide_good(request, goods_id):
         product.save()
         return redirect('my_goods')
 
+
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     return render(request, 'product_detail.html', {'good': product})
+
 
 def change_password(request):
     user = User.objects.get(id=request.session.get('user_id'))
@@ -224,6 +299,7 @@ def change_password(request):
         form = ChangePasswordForm(user)
     return render(request, 'security.html', {'form': form, 'user': user})
 
+
 def add_to_cart(request, product_id):
     user_id = request.session.get('user_id')
     product = get_object_or_404(Product, id=product_id)
@@ -234,20 +310,32 @@ def add_to_cart(request, product_id):
         cart_item.save()
     return redirect('view_cart')
 
+
 def view_cart(request):
     user_id = request.session.get('user_id')
     cart = get_object_or_404(Cart, user_id=user_id)
     items = CartItem.objects.filter(cart=cart)
     total_price = sum(item.product.price * item.quantity for item in items)
+
+    # Для каждого товара в корзине получаем только аватар
+    for item in items:
+        product = item.product
+        if product.avatar:
+            product.product_picture = product.avatar.image.url  # Используем изображение из аватара
+        else:
+            product.product_picture = 'static/default.png'  # Если аватара нет, показываем дефолтное изображение
+
     return render(request, 'cart.html', {'items': items, 'total_price': total_price})
 
-def increase_quantity(request, item_id):
+
+def increase_quantity(item_id):
     item = get_object_or_404(CartItem, id=item_id)
     item.quantity += 1
     item.save()
     return redirect('view_cart')
 
-def decrease_quantity(request, item_id):
+
+def decrease_quantity(item_id):
     item = get_object_or_404(CartItem, id=item_id)
     if item.quantity > 1:
         item.quantity -= 1
@@ -256,10 +344,12 @@ def decrease_quantity(request, item_id):
         item.delete()
     return redirect('view_cart')
 
-def remove_from_cart(request, item_id):
+
+def remove_from_cart(item_id):
     item = get_object_or_404(CartItem, id=item_id)
     item.delete()
     return redirect('view_cart')
+
 
 def checkout(request):
     user_id = request.session.get('user_id')
@@ -278,11 +368,13 @@ def checkout(request):
     items.delete()
     return redirect('order_detail', order_id=order.id)
 
+
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user_id=request.session.get('user_id'))
     items = OrderItem.objects.filter(order=order)
     user_cards = PaymentCard.objects.filter(user_id=request.session.get('user_id'))
     return render(request, 'order.html', {'order': order, 'items': items, 'user_cards': user_cards})
+
 
 def pay_order(request):
     user_id = request.session.get('user_id')
@@ -309,6 +401,7 @@ def pay_order(request):
 
     return redirect('order_detail', order_id=order.id)
 
+
 def purchases(request):
     user_id = request.session.get('user_id')
 
@@ -321,11 +414,12 @@ def purchases(request):
                 'name': item.product.name,
                 'description': item.product.description,
                 'price': item.price,
-                'product_picture': item.product.product_picture.url if item.product.product_picture else '/media/product_pictures/default.png',
+                'product_picture': item.product.avatar.image.url if item.product.avatar else '/media/static/default.png',  # добавляем аватар
                 'quantity': item.quantity
             })
 
     return render(request, 'purchases.html', {'purchases': purchases, 'user': get_object_or_404(User, id=user_id)})
+
 
 def logout_view(request):
     logout(request)

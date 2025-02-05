@@ -155,10 +155,10 @@
                     <div class="product-row">
                         <!-- Image Section -->
                         <div class="product-image">
-                            {% if item.product.product_picture %}
-                            <img src="{{ item.product.product_picture.url }}" alt="Product Image">
+                            {% if item.product.avatar %}
+                                <img src="{{ item.product.avatar.image.url }}" alt="Product Avatar">
                             {% else %}
-                            <img src="/media/product_pictures/default.png" alt="Product Picture">
+                                <img src="/media/static/default.png" alt="Product Avatar">
                             {% endif %}
                         </div>
 
